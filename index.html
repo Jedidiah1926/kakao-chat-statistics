@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>카톡 채팅 집계기</title>
+<style>
+  :root{
+    --kakao-yellow:#FEE500;
+    --kakao-yellow-dim:#F5DC00;
+    --ink:#241B14;
+    --ink-soft:#5B4F44;
+    --paper:#FFFDF7;
+    --panel:#FFFFFF;
+    --line:#EAE2D0;
+    --bubble-mine:#FEE500;
+    --bubble-other:#FFFFFF;
+    --accent-blue:#3A6FF7;
+    --radius:14px;
+    --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 500px at 20% -10%, #FFF6C8 0%, transparent 60%),
+      var(--paper);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Segoe UI', sans-serif;
+    min-height:100vh;
+    line-height:1.5;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:48px 24px 96px;}
+
+  /* ---- Header ---- */
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:var(--mono);
+    font-size:12px;letter-spacing:.06em;
+    color:var(--ink-soft);
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:5px 10px;border-radius:999px;
+    margin-bottom:18px;
+  }
+  .eyebrow .dot{width:8px;height:8px;border-radius:50%;background:var(--kakao-yellow);border:1px solid #D8B900;}
+  h1{
+    font-size:clamp(28px,4vw,40px);
+    line-height:1.15;
+    margin:0 0 10px;
+    font-weight:800;
+    letter-spacing:-0.02em;
+  }
+  .sub{color:var(--ink-soft); font-size:15.5px; max-width:56ch; margin:0 0 36px;}
+
+  /* ---- Cards ---- */
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:26px;
+    margin-bottom:20px;
+    box-shadow:0 1px 0 rgba(36,27,20,0.03);
+  }
+  .card h2{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+    margin:0 0 16px;
+    font-weight:700;
+    display:flex;align-items:center;gap:8px;
+  }
+  .card h2 .num{
+    font-family:var(--mono);
+    background:var(--ink);
+    color:var(--kakao-yellow);
+    width:20px;height:20px;
+    border-radius:6px;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-size:11px;
+  }
+
+  /* ---- Dropzone ---- */
+  .drop{
+    border:2px dashed var(--line);
+    border-radius:12px;
+    padding:34px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+    background:#FFFEF9;
+  }
+  .drop:hover, .drop.drag{
+    border-color:var(--kakao-yellow-dim);
+    background:#FFFBE8;
+  }
+  .drop .icon{
+    width:44px;height:44px;margin:0 auto 12px;
+    border-radius:50%;
+    background:var(--kakao-yellow);
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;
+  }
+  .drop .main{font-weight:700;font-size:15px;margin-bottom:4px;}
+  .drop .hint{font-size:13px;color:var(--ink-soft);}
+  input[type=file]{display:none;}
+  .file-chip{
+    display:none;
+    margin-top:14px;
+    align-items:center;
+    gap:10px;
+    font-family:var(--mono);
+    font-size:13px;
+    background:#F4EFDD;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:8px 12px;
+  }
+  .file-chip.show{display:inline-flex;}
+  .file-chip .clear{cursor:pointer;color:var(--ink-soft);font-weight:700;}
+
+  /* ---- Date row ---- */
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:560px){.row{grid-template-columns:1fr;}}
+  label{
+    display:block;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  input[type=datetime-local], select{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    font-size:14px;
+    font-family:var(--mono);
+    background:#fff;
+    color:var(--ink);
+  }
+  input[type=datetime-local]:focus, select:focus{
+    outline:2px solid var(--kakao-yellow-dim);
+    outline-offset:1px;
+  }
+  .range-note{font-size:12px;color:var(--ink-soft);margin-top:10px;}
+
+  .run-btn{
+    margin-top:22px;
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:10px;
+    background:var(--kakao-yellow);
+    color:var(--ink);
+    font-weight:800;
+    font-size:15px;
+    cursor:pointer;
+    transition:transform .08s, background .15s;
+  }
+  .run-btn:hover{background:var(--kakao-yellow-dim);}
+  .run-btn:active{transform:scale(0.99);}
+  .run-btn:disabled{background:#EDE6CE;color:var(--ink-soft);cursor:not-allowed;}
+
+  /* ---- Stat strip ---- */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  @media (max-width:560px){.stats{grid-template-columns:1fr;}}
+  .stat{
+    background:#FFFDF2;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px;
+  }
+  .stat .label{font-size:11.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+  .stat .value{font-family:var(--mono);font-size:22px;font-weight:700;}
+
+  /* ---- Leaderboard: chat bubble rows ---- */
+  .board{display:flex;flex-direction:column;gap:10px;}
+  .rank-row{
+    display:grid;
+    grid-template-columns:32px 1fr auto;
+    align-items:center;
+    gap:12px;
+  }
+  .rank-num{
+    font-family:var(--mono);
+    font-weight:800;
+    font-size:14px;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+  .rank-row:nth-child(1) .rank-num{color:#B8860B;}
+  .rank-row:nth-child(2) .rank-num{color:#8C8C8C;}
+  .rank-row:nth-child(3) .rank-num{color:#B5651D;}
+  .bubble-track{
+    position:relative;
+    background:#F4EFDD;
+    border-radius:999px;
+    height:34px;
+    overflow:hidden;
+  }
+  .bubble-fill{
+    position:absolute;left:0;top:0;bottom:0;
+    background:linear-gradient(90deg, var(--kakao-yellow-dim), var(--kakao-yellow));
+    border-radius:999px;
+    transition:width .5s cubic-bezier(.2,.8,.2,1);
+  }
+  .bubble-label{
+    position:absolute;left:14px;top:0;bottom:0;
+    display:flex;align-items:center;
+    font-weight:700;font-size:13.5px;
+    color:var(--ink);
+    max-width:80%;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .rank-count{
+    font-family:var(--mono);
+    font-weight:700;
+    font-size:14px;
+    min-width:56px;
+    text-align:right;
+  }
+  .rank-count .unit{font-size:11px;color:var(--ink-soft);font-weight:400;margin-left:2px;}
+
+  .empty{
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:14px;
+    padding:20px 0;
+  }
+
+  .footnote{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:10px;
+    line-height:1.6;
+  }
+
+  .privacy{
+    display:flex;align-items:center;gap:8px;
+    font-size:12.5px;color:var(--ink-soft);
+    margin-top:28px;
+  }
+  .privacy .icon{font-size:14px;}
+
+  #results{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow"><span class="dot"></span>KAKAOTALK 대화 내보내기 분석</div>
+  <h1>누가, 언제, 얼마나<br>채팅을 쳤는지 세어봐요</h1>
+  <p class="sub">대화 내보내기(.txt) 파일을 올리고 시작~끝 시점을 지정하면, 그 기간 동안 모든 참여자의 채팅 개수와 순위를 계산해요. 파일은 브라우저 밖으로 전송되지 않아요.</p>
+
+  <!-- Step 1: Upload -->
+  <div class="card">
+    <h2><span class="num">1</span>대화 파일 업로드</h2>
+    <div class="drop" id="dropzone">
+      <div class="icon">💬</div>
+      <div class="main">.txt 파일을 끌어다 놓거나 클릭해서 선택하세요</div>
+      <div class="hint">카카오톡 &rarr; 대화방 설정 &rarr; 대화 내보내기로 생성한 파일</div>
+      <input type="file" id="fileInput" accept=".txt">
+    </div>
+    <div class="file-chip" id="fileChip">
+      <span id="fileName"></span>
+      <span class="clear" id="clearFile">✕ 지우기</span>
+    </div>
+  </div>
+
+  <!-- Step 2: Range -->
+  <div class="card">
+    <h2><span class="num">2</span>집계 기간 설정</h2>
+    <div class="row">
+      <div>
+        <label for="sinceInput">시작 시점</label>
+        <input type="datetime-local" id="sinceInput" disabled>
+      </div>
+      <div>
+        <label for="untilInput">끝 시점</label>
+        <input type="datetime-local" id="untilInput" disabled>
+      </div>
+    </div>
+    <div class="range-note" id="rangeNote">파일을 먼저 업로드하면 대화 전체 기간이 자동으로 채워져요.</div>
+    <button class="run-btn" id="runBtn" disabled>이 기간 채팅 집계하기</button>
+  </div>
+
+  <!-- Step 3: Results -->
+  <div class="card" id="results">
+    <h2><span class="num">3</span>집계 결과</h2>
+
+    <div class="stats" style="margin-bottom:24px;">
+      <div class="stat">
+        <div class="label">기간 내 총 채팅</div>
+        <div class="value" id="statTotal">0</div>
+      </div>
+      <div class="stat">
+        <div class="label">참여자 수</div>
+        <div class="value" id="statPeople">0</div>
+      </div>
+      <div class="stat">
+        <div class="label">1위</div>
+        <div class="value" id="statTop">-</div>
+      </div>
+    </div>
+
+    <div class="board" id="board"></div>
+    <div class="footnote">※ 여러 줄로 이어진 메시지는 1건으로 계산되며, 입장/초대/퇴장 등 시스템 메시지는 제외됩니다.</div>
+  </div>
+
+  <div class="privacy"><span class="icon">🔒</span>모든 분석은 이 브라우저 안에서만 이루어지고, 파일은 서버로 전송되지 않아요.</div>
+</div>
+
+<script>
+(function(){
+  // ---------- Parsing (mirrors kakao_chat_counter.py logic) ----------
+  const DATE_SEP_RE = /^-+\s*(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일.*?-+\s*$/;
+  const PATTERN_PC_ANDROID = /^(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일\s*(오전|오후)\s*(\d{1,2}):(\d{2}),\s*(.+?)\s*:\s*(.*)$/;
+  const PATTERN_PC_IOS = /^(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.\s*(오전|오후)\s*(\d{1,2}):(\d{2}),\s*(.+?)\s*:\s*(.*)$/;
+  const PATTERN_MOBILE_OLD = /^\[(.+?)\]\s*\[(오전|오후)\s*(\d{1,2}):(\d{2})\]\s*(.*)$/;
+  const SYSTEM_MSG_PATTERNS = [
+    /.+님이 들어왔습니다\.?$/,
+    /.+님을 초대하였습니다\.?$/,
+    /.+님이 나갔습니다\.?$/,
+    /^저장한 날짜\s*:/
+  ];
+
+  function isSystemMessage(text){
+    return SYSTEM_MSG_PATTERNS.some(p => p.test(text));
+  }
+
+  function to24h(hour, period){
+    hour = parseInt(hour, 10);
+    if(period === '오전'){
+      if(hour === 12) hour = 0;
+    } else {
+      if(hour !== 12) hour += 12;
+    }
+    return hour;
+  }
+
+  function parseChatText(raw){
+    const lines = raw.split(/\r?\n/);
+    const messages = []; // {dt: Date, sender, text}
+    let currentDate = null;
+
+    for(const rawLine of lines){
+      const line = rawLine.replace(/\s+$/,'');
+      if(!line.trim()) continue;
+
+      let m = DATE_SEP_RE.exec(line);
+      if(m){
+        currentDate = [parseInt(m[1],10), parseInt(m[2],10), parseInt(m[3],10)];
+        continue;
+      }
+
+      m = PATTERN_PC_ANDROID.exec(line);
+      if(m){
+        const [, y, mo, d, period, h, mi, sender, text] = m;
+        if(isSystemMessage(text) || isSystemMessage(line)) continue;
+        const hour = to24h(h, period);
+        const dt = new Date(+y, +mo - 1, +d, hour, +mi);
+        messages.push({dt, sender: sender.trim(), text});
+        continue;
+      }
+
+      m = PATTERN_PC_IOS.exec(line);
+      if(m){
+        const [, y, mo, d, period, h, mi, sender, text] = m;
+        if(isSystemMessage(text) || isSystemMessage(line)) continue;
+        const hour = to24h(h, period);
+        const dt = new Date(+y, +mo - 1, +d, hour, +mi);
+        messages.push({dt, sender: sender.trim(), text});
+        continue;
+      }
+
+      m = PATTERN_MOBILE_OLD.exec(line);
+      if(m && currentDate){
+        const [, sender, period, h, mi, text] = m;
+        if(isSystemMessage(text) || isSystemMessage(line)) continue;
+        const hour = to24h(h, period);
+        const [y, mo, d] = currentDate;
+        const dt = new Date(y, mo - 1, d, hour, +mi);
+        messages.push({dt, sender: sender.trim(), text});
+        continue;
+      }
+
+      // continuation of previous multi-line message
+      if(messages.length){
+        messages[messages.length - 1].text += '\n' + line;
+      }
+    }
+    return messages;
+  }
+
+  // ---------- UI wiring ----------
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const fileChip = document.getElementById('fileChip');
+  const fileName = document.getElementById('fileName');
+  const clearFile = document.getElementById('clearFile');
+  const sinceInput = document.getElementById('sinceInput');
+  const untilInput = document.getElementById('untilInput');
+  const rangeNote = document.getElementById('rangeNote');
+  const runBtn = document.getElementById('runBtn');
+  const results = document.getElementById('results');
+  const board = document.getElementById('board');
+  const statTotal = document.getElementById('statTotal');
+  const statPeople = document.getElementById('statPeople');
+  const statTop = document.getElementById('statTop');
+
+  let allMessages = [];
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function toLocalInputValue(dt){
+    return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+  }
+
+  function handleFile(file){
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      allMessages = parseChatText(text);
+
+      fileName.textContent = `${file.name} · 메시지 ${allMessages.length.toLocaleString()}건 파싱됨`;
+      fileChip.classList.add('show');
+
+      if(allMessages.length){
+        const first = allMessages[0].dt;
+        const last = allMessages[allMessages.length - 1].dt;
+        sinceInput.value = toLocalInputValue(first);
+        untilInput.value = toLocalInputValue(last);
+        sinceInput.disabled = false;
+        untilInput.disabled = false;
+        runBtn.disabled = false;
+        rangeNote.textContent = `대화 전체 기간: ${first.toLocaleString('ko-KR')} ~ ${last.toLocaleString('ko-KR')} (필요시 직접 조정하세요)`;
+      } else {
+        rangeNote.textContent = '메시지를 하나도 인식하지 못했어요. 파일 형식을 확인해주세요.';
+        runBtn.disabled = true;
+      }
+      results.style.display = 'none';
+    };
+    reader.readAsText(file, 'utf-8');
+  }
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('drag');
+    if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', (e) => {
+    if(e.target.files.length) handleFile(e.target.files[0]);
+  });
+  clearFile.addEventListener('click', (e) => {
+    e.stopPropagation();
+    allMessages = [];
+    fileInput.value = '';
+    fileChip.classList.remove('show');
+    sinceInput.value = ''; untilInput.value = '';
+    sinceInput.disabled = true; untilInput.disabled = true;
+    runBtn.disabled = true;
+    rangeNote.textContent = '파일을 먼저 업로드하면 대화 전체 기간이 자동으로 채워져요.';
+    results.style.display = 'none';
+  });
+
+  runBtn.addEventListener('click', () => {
+    if(!allMessages.length) return;
+    const since = sinceInput.value ? new Date(sinceInput.value) : null;
+    const until = untilInput.value ? new Date(untilInput.value) : null;
+
+    const filtered = allMessages.filter(m =>
+      (!since || m.dt >= since) && (!until || m.dt <= until)
+    );
+
+    const counts = new Map();
+    for(const m of filtered){
+      counts.set(m.sender, (counts.get(m.sender) || 0) + 1);
+    }
+    const ranked = [...counts.entries()].sort((a,b) => b[1] - a[1]);
+
+    statTotal.textContent = filtered.length.toLocaleString();
+    statPeople.textContent = ranked.length.toLocaleString();
+    statTop.textContent = ranked.length ? ranked[0][0] : '-';
+
+    board.innerHTML = '';
+    if(!ranked.length){
+      board.innerHTML = '<div class="empty">지정한 기간에 채팅이 없어요.</div>';
+    } else {
+      const max = ranked[0][1];
+      ranked.forEach(([name, count], i) => {
+        const pct = Math.max(6, Math.round((count / max) * 100));
+        const row = document.createElement('div');
+        row.className = 'rank-row';
+        row.innerHTML = `
+          <div class="rank-num">${i + 1}</div>
+          <div class="bubble-track">
+            <div class="bubble-fill" style="width:${pct}%"></div>
+            <div class="bubble-label">${escapeHtml(name)}</div>
+          </div>
+          <div class="rank-count">${count.toLocaleString()}<span class="unit">건</span></div>
+        `;
+        board.appendChild(row);
+      });
+    }
+    results.style.display = 'block';
+    results.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+})();
+</script>
+</body>
+</html>
