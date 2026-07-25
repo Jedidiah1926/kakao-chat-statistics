@@ -342,65 +342,73 @@
     gap:10px;
   }
 
-  /* ---- Hourly chart ---- */
+  /* ---- Line chart ---- */
   .chart-title{
     font-weight:800;
     font-size:14.5px;
-    margin-bottom:2px;
+    margin-bottom:14px;
   }
-  .chart-subtitle{
-    font-weight:400;
-    font-size:12px;
+  .chart-controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .mini-toggle{
+    display:flex;
+    background:#F4EFDD;
+    border:1px solid var(--line);
+    border-radius:9px;
+    padding:3px;
+    gap:3px;
+  }
+  .mini-toggle-btn{
+    padding:8px 12px;
+    border:none;
+    border-radius:7px;
+    background:transparent;
     color:var(--ink-soft);
-  }
-  .hour-chart{
-    display:flex;
-    align-items:flex-end;
-    gap:5px;
-    height:200px;
-    margin:20px 0 4px;
-    padding:22px 2px 0;
-  }
-  .hour-bar-wrap{
-    flex:1 1 0;
-    min-width:0;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:flex-end;
-    height:100%;
-    position:relative;
-  }
-  .hour-bar-count{
-    font-family:var(--mono);
-    font-size:10px;
     font-weight:700;
-    color:var(--ink);
-    margin-bottom:4px;
-    opacity:0;
-    transition:opacity .15s;
+    font-size:12px;
+    cursor:pointer;
     white-space:nowrap;
   }
-  .hour-bar-wrap:hover .hour-bar-count{opacity:1;}
-  .hour-bar{
+  .mini-toggle-btn:hover{color:var(--ink);}
+  .mini-toggle-btn.active{
+    background:#fff;
+    color:var(--ink);
+    box-shadow:0 1px 3px rgba(36,27,20,0.12);
+  }
+  .line-chart-scroll{
     width:100%;
-    max-width:22px;
-    background:linear-gradient(180deg, var(--kakao-yellow), var(--kakao-yellow-dim));
-    border-radius:5px 5px 0 0;
-    transition:height .5s cubic-bezier(.2,.8,.2,1), background .15s;
+    overflow-x:auto;
+    overflow-y:hidden;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:#FFFDF2;
+    padding:6px 0;
   }
-  .hour-bar-wrap:hover .hour-bar{
-    background:linear-gradient(180deg, #93E4FF, #38BDF8);
+  .line-chart-scroll svg{
+    display:block;
   }
-  .hour-bar-label{
-    font-family:var(--mono);
-    font-size:9.5px;
+  .chart-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    margin-top:14px;
+  }
+  .legend-item{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:12.5px;
+    font-weight:600;
     color:var(--ink-soft);
-    margin-top:6px;
   }
-  @media (max-width:700px){
-    .hour-bar-label{font-size:8px;}
-    .hour-chart{gap:2px;}
+  .legend-dot{
+    width:10px;height:10px;
+    border-radius:50%;
+    flex-shrink:0;
   }
 
   /* ---- Stat strip ---- */
@@ -695,8 +703,21 @@
         <div class="board" id="board"></div>
 
         <div class="chart-wrap" id="chartWrap" style="display:none;">
-          <div class="chart-title">시간대별 채팅량 <span class="chart-subtitle">(0시 ~ 23시 정각 기준, 전체 기간 합산)</span></div>
-          <div class="hour-chart" id="hourChart"></div>
+          <div class="chart-title">채팅량 그래프</div>
+
+          <div class="chart-controls">
+            <div class="mini-toggle" id="chartModeToggle">
+              <button class="mini-toggle-btn active" type="button" data-mode="hour">🕐 시간대별 합산 (0~23시)</button>
+              <button class="mini-toggle-btn" type="button" data-mode="timeline">📅 전체 기간 타임라인</button>
+            </div>
+            <div class="mini-toggle" id="chartSeriesToggle">
+              <button class="mini-toggle-btn active" type="button" data-series="total">전체 합산</button>
+              <button class="mini-toggle-btn" type="button" data-series="byPerson">👤 인원별 색상 구분</button>
+            </div>
+          </div>
+
+          <div class="line-chart-scroll" id="lineChartScroll"></div>
+          <div class="chart-legend" id="chartLegend"></div>
           <div class="empty" id="chartEmpty" style="display:none;">먼저 '채팅 집계하기'를 눌러주세요.</div>
         </div>
 
@@ -856,7 +877,10 @@
   const viewTableBtn = document.getElementById('viewTableBtn');
   const viewChartBtn = document.getElementById('viewChartBtn');
   const chartWrap = document.getElementById('chartWrap');
-  const hourChart = document.getElementById('hourChart');
+  const chartModeToggle = document.getElementById('chartModeToggle');
+  const chartSeriesToggle = document.getElementById('chartSeriesToggle');
+  const lineChartScroll = document.getElementById('lineChartScroll');
+  const chartLegend = document.getElementById('chartLegend');
   const chartEmpty = document.getElementById('chartEmpty');
   const exportPngBtn = document.getElementById('exportPngBtn');
   const exportPdfBtn = document.getElementById('exportPdfBtn');
@@ -883,6 +907,8 @@
   let currentTotal = 0;        // total messages in that date range (all shown ranks)
   let currentFilteredMessages = []; // raw filtered messages for the currently-run date range (for the hourly chart)
   let currentView = 'table';   // 'table' | 'chart'
+  let chartMode = 'hour';      // 'hour' | 'timeline'
+  let chartSeriesMode = 'total'; // 'total' | 'byPerson'
   let currentFileBase = 'kakao_chat';
   let currentRangeLabel = '';
   let currentWordRanked = [];  // [[word, count], ...] for the currently-run date range
@@ -971,7 +997,7 @@
       wordSearchInput.value = '';
       renderWordBoard();
       setView('table');
-      renderHourChart();
+      renderChart();
 
       if(allMessages.length){
         const first = allMessages[0].dt;
@@ -1093,7 +1119,7 @@
     wordSearchInput.value = '';
     renderWordBoard();
     setView('table');
-    renderHourChart();
+    renderChart();
   });
 
   runBtn.addEventListener('click', () => {
@@ -1136,7 +1162,7 @@
     rankToInput.max = maxRank;
 
     renderBoard(1, maxRank);
-    renderHourChart();
+    renderChart();
     results.style.display = 'block';
     results.scrollIntoView({behavior:'smooth', block:'start'});
   });
@@ -1221,35 +1247,173 @@
   viewTableBtn.addEventListener('click', () => setView('table'));
   viewChartBtn.addEventListener('click', () => setView('chart'));
 
-  function renderHourChart(){
-    hourChart.innerHTML = '';
+  const CHART_PALETTE = ['#38BDF8','#F97316','#22C55E','#A855F7','#EF4444','#0EA5E9','#EAB308','#EC4899','#14B8A6','#6366F1'];
+  const CHART_TOTAL_COLOR = '#3A6FF7';
+  const CHART_OTHERS_COLOR = '#9CA3AF';
+  const CHART_TOP_N = 8; // cap individual lines; the rest are folded into "기타"
+
+  function dayKeyOf(d){
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  }
+  function dayLabelOf(key){
+    const parts = key.split('-');
+    return `${parts[1]}/${parts[2]}`;
+  }
+
+  function buildPersonSeries(personMap, categories){
+    const entries = [...personMap.entries()].map(([name, arr]) => [name, arr, arr.reduce((a,b) => a+b, 0)]);
+    entries.sort((a,b) => b[2] - a[2]);
+    const top = entries.slice(0, CHART_TOP_N);
+    const rest = entries.slice(CHART_TOP_N);
+    const series = top.map(([name, arr], i) => ({ name, color: CHART_PALETTE[i % CHART_PALETTE.length], values: arr }));
+    if(rest.length){
+      const restArr = new Array(categories.length).fill(0);
+      rest.forEach(([, arr]) => arr.forEach((v, i) => { restArr[i] += v; }));
+      series.push({ name: `기타 (${rest.length}명)`, color: CHART_OTHERS_COLOR, values: restArr });
+    }
+    return { categories, series };
+  }
+
+  function getHourSeries(){
+    const categories = Array.from({length: 24}, (_, h) => `${h}시`);
+    if(chartSeriesMode === 'total'){
+      const counts = new Array(24).fill(0);
+      currentFilteredMessages.forEach(m => { counts[m.dt.getHours()]++; });
+      return { categories, series: [{ name: '전체', color: CHART_TOTAL_COLOR, values: counts }] };
+    }
+    const personMap = new Map();
+    currentFilteredMessages.forEach(m => {
+      if(!personMap.has(m.sender)) personMap.set(m.sender, new Array(24).fill(0));
+      personMap.get(m.sender)[m.dt.getHours()]++;
+    });
+    return buildPersonSeries(personMap, categories);
+  }
+
+  function getTimelineDayKeys(){
+    let minKey = null, maxKey = null;
+    currentFilteredMessages.forEach(m => {
+      const key = dayKeyOf(m.dt);
+      if(minKey === null || key < minKey) minKey = key;
+      if(maxKey === null || key > maxKey) maxKey = key;
+    });
+    if(minKey === null) return [];
+    const start = new Date(minKey + 'T00:00:00');
+    const end = new Date(maxKey + 'T00:00:00');
+    const days = [];
+    for(let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)){
+      days.push(dayKeyOf(d));
+    }
+    return days;
+  }
+
+  function getTimelineSeries(){
+    const days = getTimelineDayKeys();
+    const categories = days.map(dayLabelOf);
+    if(chartSeriesMode === 'total'){
+      const counts = new Map(days.map(d => [d, 0]));
+      currentFilteredMessages.forEach(m => {
+        const key = dayKeyOf(m.dt);
+        counts.set(key, (counts.get(key) || 0) + 1);
+      });
+      return { categories, series: [{ name: '전체', color: CHART_TOTAL_COLOR, values: days.map(d => counts.get(d)) }] };
+    }
+    const personMap = new Map();
+    currentFilteredMessages.forEach(m => {
+      const key = dayKeyOf(m.dt);
+      if(!personMap.has(m.sender)) personMap.set(m.sender, new Map(days.map(d => [d, 0])));
+      const dayCounts = personMap.get(m.sender);
+      dayCounts.set(key, (dayCounts.get(key) || 0) + 1);
+    });
+    const arrMap = new Map();
+    personMap.forEach((dayCounts, name) => arrMap.set(name, days.map(d => dayCounts.get(d) || 0)));
+    return buildPersonSeries(arrMap, categories);
+  }
+
+  function buildSvgLineChart(categories, seriesList, width){
+    const height = 260;
+    const padLeft = 42, padRight = 16, padTop = 18, padBottom = 34;
+    const innerW = width - padLeft - padRight;
+    const innerH = height - padTop - padBottom;
+    const maxVal = Math.max(1, ...seriesList.flatMap(s => s.values));
+    const xStep = categories.length > 1 ? innerW / (categories.length - 1) : 0;
+    const xAt = i => padLeft + i * xStep;
+    const yAt = v => padTop + innerH - (v / maxVal) * innerH;
+
+    let svg = `<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
+
+    // horizontal gridlines + y-axis value labels
+    for(let g = 0; g <= 4; g++){
+      const y = padTop + innerH - (g / 4) * innerH;
+      const val = Math.round((g / 4) * maxVal);
+      svg += `<line x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}" stroke="#EAE2D0" stroke-width="1"/>`;
+      svg += `<text x="${padLeft - 8}" y="${y + 3}" font-size="9.5" fill="#5B4F44" text-anchor="end" font-family="monospace">${val.toLocaleString()}</text>`;
+    }
+
+    // x-axis labels (skip to avoid overlap)
+    const labelEvery = Math.max(1, Math.ceil(categories.length / Math.max(1, Math.floor(innerW / 46))));
+    categories.forEach((label, i) => {
+      if(i % labelEvery !== 0 && i !== categories.length - 1) return;
+      svg += `<text x="${xAt(i)}" y="${height - 12}" font-size="9.5" fill="#5B4F44" text-anchor="middle" font-family="monospace">${escapeHtml(label)}</text>`;
+    });
+
+    // lines drawn after gridlines so they sit on top; each series as polyline + dots
+    seriesList.forEach(s => {
+      const points = s.values.map((v, i) => `${xAt(i).toFixed(1)},${yAt(v).toFixed(1)}`).join(' ');
+      svg += `<polyline points="${points}" fill="none" stroke="${s.color}" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/>`;
+    });
+    seriesList.forEach(s => {
+      s.values.forEach((v, i) => {
+        svg += `<circle cx="${xAt(i).toFixed(1)}" cy="${yAt(v).toFixed(1)}" r="2.6" fill="${s.color}"><title>${escapeHtml(s.name)} · ${escapeHtml(categories[i])}: ${v.toLocaleString()}건</title></circle>`;
+      });
+    });
+
+    svg += `</svg>`;
+    return svg;
+  }
+
+  function renderChart(){
     if(!currentFilteredMessages.length){
       chartEmpty.style.display = 'block';
+      lineChartScroll.innerHTML = '';
+      chartLegend.innerHTML = '';
+      chartLegend.style.display = 'none';
       return;
     }
     chartEmpty.style.display = 'none';
 
-    const hourCounts = new Array(24).fill(0);
-    for(const m of currentFilteredMessages){
-      hourCounts[m.dt.getHours()]++;
-    }
-    const max = Math.max(...hourCounts, 1);
+    const data = chartMode === 'hour' ? getHourSeries() : getTimelineSeries();
+    const containerWidth = Math.max(320, lineChartScroll.clientWidth || 700);
+    const width = chartMode === 'hour'
+      ? containerWidth
+      : Math.max(containerWidth, data.categories.length * 26);
 
-    const frag = document.createDocumentFragment();
-    hourCounts.forEach((count, hour) => {
-      const pct = Math.max(2, Math.round((count / max) * 100));
-      const wrap = document.createElement('div');
-      wrap.className = 'hour-bar-wrap';
-      wrap.title = `${hour}시: ${count.toLocaleString()}건`;
-      wrap.innerHTML = `
-        <div class="hour-bar-count">${count.toLocaleString()}</div>
-        <div class="hour-bar" style="height:${pct}%"></div>
-        <div class="hour-bar-label">${hour}시</div>
-      `;
-      frag.appendChild(wrap);
-    });
-    hourChart.appendChild(frag);
+    lineChartScroll.innerHTML = buildSvgLineChart(data.categories, data.series, width);
+
+    if(data.series.length > 1){
+      chartLegend.style.display = 'flex';
+      chartLegend.innerHTML = data.series.map(s =>
+        `<span class="legend-item"><span class="legend-dot" style="background:${s.color}"></span>${escapeHtml(s.name)}</span>`
+      ).join('');
+    } else {
+      chartLegend.style.display = 'none';
+      chartLegend.innerHTML = '';
+    }
   }
+
+  chartModeToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('.mini-toggle-btn');
+    if(!btn) return;
+    chartMode = btn.dataset.mode;
+    chartModeToggle.querySelectorAll('.mini-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderChart();
+  });
+  chartSeriesToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('.mini-toggle-btn');
+    if(!btn) return;
+    chartSeriesMode = btn.dataset.series;
+    chartSeriesToggle.querySelectorAll('.mini-toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderChart();
+  });
 
   // ---------- Tabs ----------
   function switchTab(tab){
