@@ -203,6 +203,76 @@
     border-color:var(--kakao-yellow-dim);
   }
 
+  /* ---- Results controls (rank range + export) ---- */
+  .controls-row{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:end;
+    gap:10px;
+    padding-bottom:18px;
+    margin-bottom:20px;
+    border-bottom:1px dashed var(--line);
+  }
+  .range-field{display:flex;flex-direction:column;gap:6px;}
+  .range-field label{
+    font-size:11px;font-weight:700;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:.04em;margin:0;
+  }
+  .range-field input[type=number]{
+    width:84px;
+    padding:8px 10px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    font-family:var(--mono);
+    font-size:13.5px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .range-field input[type=number]:focus{
+    outline:2px solid var(--kakao-yellow-dim);
+    outline-offset:1px;
+  }
+  .mini-btn{
+    padding:9px 14px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#fff;
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink);
+    cursor:pointer;
+    height:37px;
+  }
+  .mini-btn:hover{border-color:var(--kakao-yellow-dim);background:#FFFBE8;}
+  .spacer{flex:1 1 auto;min-width:8px;}
+  .export-btn{
+    padding:9px 14px;
+    border:1px solid var(--ink);
+    border-radius:8px;
+    background:var(--ink);
+    color:var(--kakao-yellow);
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    height:37px;
+    white-space:nowrap;
+  }
+  .export-btn:hover{background:#3a2c1f;}
+  .export-btn:disabled{
+    background:#EDE6CE;color:var(--ink-soft);border-color:var(--line);cursor:not-allowed;
+  }
+  #captureArea{background:var(--panel);}
+  .capture-meta{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:16px;
+    padding-bottom:14px;
+    border-bottom:1px solid var(--line);
+    line-height:1.7;
+  }
+  .capture-meta strong{color:var(--ink);}
+
   /* ---- Stat strip ---- */
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
   @media (max-width:560px){.stats{grid-template-columns:1fr;}}
@@ -285,6 +355,105 @@
   .privacy .icon{font-size:14px;}
 
   #results{display:none;}
+
+  /* ---- Tabs ---- */
+  .tabs{
+    display:flex;
+    gap:6px;
+    background:#F4EFDD;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:5px;
+    margin-bottom:20px;
+  }
+  .tab-btn{
+    flex:1 1 50%;
+    padding:12px 14px;
+    border:none;
+    border-radius:9px;
+    background:transparent;
+    color:var(--ink-soft);
+    font-weight:800;
+    font-size:14.5px;
+    cursor:pointer;
+    transition:background .15s, color .15s, box-shadow .15s;
+  }
+  .tab-btn:hover{color:var(--ink);}
+  .tab-btn.active{
+    background:var(--panel);
+    color:var(--ink);
+    box-shadow:0 1px 4px rgba(36,27,20,0.12);
+  }
+
+  /* ---- Word search tab ---- */
+  .word-search-sticky{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:var(--panel);
+    padding:4px 0 16px;
+    margin-bottom:4px;
+    border-bottom:1px solid var(--line);
+  }
+  .search-row{display:flex;gap:10px;margin-top:6px;}
+  .search-row input[type=text]{
+    flex:1;
+    padding:12px 14px;
+    border:1px solid var(--line);
+    border-radius:9px;
+    font-size:15px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .search-row input[type=text]:focus{
+    outline:2px solid var(--kakao-yellow-dim);
+    outline-offset:1px;
+  }
+  .mini-btn.primary{
+    background:var(--kakao-yellow);
+    border-color:#D8B900;
+    white-space:nowrap;
+  }
+  .mini-btn.primary:hover{background:var(--kakao-yellow-dim);}
+  .word-search-note{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-top:10px;
+    min-height:16px;
+  }
+  .word-search-note.found{color:#1E7A34;font-weight:700;}
+  .word-search-note.notfound{color:#C13A2E;font-weight:700;}
+
+  .rank-row.word-highlight-active .bubble-fill{
+    background-color:#38BDF8;
+    background-image:none;
+  }
+  .rank-row.word-highlight-active{
+    animation:highlightEnterPulse 700ms ease-out 1;
+    border-radius:999px;
+  }
+  @keyframes highlightEnterPulse{
+    0%{box-shadow:0 0 0 0 rgba(56,189,248,0.5);}
+    100%{box-shadow:0 0 0 10px rgba(56,189,248,0);}
+  }
+
+  .rank-row.word-highlight-fadeout .bubble-fill{
+    background-image:none;
+    animation:wordHighlightFadeOut 1800ms linear 1 forwards;
+  }
+  .rank-row.word-highlight-fadeout{
+    animation:fadeOutPulse 1800ms ease-out 1;
+    border-radius:999px;
+  }
+  @keyframes wordHighlightFadeOut{
+    0%{background-color:#38BDF8;}
+    50%{background-color:#22C55E;}
+    100%{background-color:var(--kakao-yellow);}
+  }
+  @keyframes fadeOutPulse{
+    0%{box-shadow:0 0 0 0 rgba(34,197,94,0.35);}
+    100%{box-shadow:0 0 0 0 rgba(34,197,94,0);}
+  }
 </style>
 </head>
 <body>
@@ -326,39 +495,105 @@
     <button class="run-btn" id="runBtn" disabled>이 기간 채팅 집계하기</button>
   </div>
 
-  <!-- Step 3: Exclude members -->
-  <div class="card" id="excludeCard" style="display:none;">
-    <h2><span class="num">3</span>순위에서 제외할 멤버 <span id="excludeCount" style="font-weight:400;color:var(--ink-soft);text-transform:none;letter-spacing:normal;"></span></h2>
-    <div class="chip-list" id="memberList"></div>
-    <div class="range-note">체크한 멤버는 총 채팅 수와 순위 계산에서 완전히 제외돼요. (예: 나 자신, 봇, 탈퇴한 멤버 등)</div>
+  <!-- Tabs -->
+  <div class="tabs" id="tabBar">
+    <button class="tab-btn active" id="tabBtnPerson" data-tab="person">👤 인물별 집계</button>
+    <button class="tab-btn" id="tabBtnWord" data-tab="word">🔍 단어 횟수 검색</button>
   </div>
 
-  <!-- Step 4: Results -->
-  <div class="card" id="results">
-    <h2><span class="num">4</span>집계 결과</h2>
+  <!-- Tab panel: person ranking (existing feature) -->
+  <div class="tab-panel" id="tabPanelPerson">
 
-    <div class="stats" style="margin-bottom:24px;">
-      <div class="stat">
-        <div class="label">기간 내 총 채팅</div>
-        <div class="value" id="statTotal">0</div>
-      </div>
-      <div class="stat">
-        <div class="label">참여자 수</div>
-        <div class="value" id="statPeople">0</div>
-      </div>
-      <div class="stat">
-        <div class="label">1위</div>
-        <div class="value" id="statTop">-</div>
-      </div>
+    <!-- Step 3: Exclude members -->
+    <div class="card" id="excludeCard" style="display:none;">
+      <h2><span class="num">3</span>순위에서 제외할 멤버 <span id="excludeCount" style="font-weight:400;color:var(--ink-soft);text-transform:none;letter-spacing:normal;"></span></h2>
+      <div class="chip-list" id="memberList"></div>
+      <div class="range-note">체크한 멤버는 총 채팅 수와 순위 계산에서 완전히 제외돼요. (예: 나 자신, 봇, 탈퇴한 멤버 등)</div>
     </div>
 
-    <div class="board" id="board"></div>
-    <div class="footnote">※ 여러 줄로 이어진 메시지는 1건으로 계산되며, 입장/초대/퇴장 등 시스템 메시지는 제외됩니다.</div>
+    <!-- Step 4: Results -->
+    <div class="card" id="results">
+      <h2><span class="num">4</span>집계 결과</h2>
+
+      <div class="controls-row">
+        <div class="range-field">
+          <label for="rankFrom">표시 순위 (시작)</label>
+          <input type="number" id="rankFrom" min="1" value="1">
+        </div>
+        <div class="range-field">
+          <label for="rankTo">표시 순위 (끝)</label>
+          <input type="number" id="rankTo" min="1" value="1">
+        </div>
+        <button class="mini-btn" id="applyRankBtn">범위 적용</button>
+        <button class="mini-btn" id="showAllBtn">전체 보기</button>
+        <div class="spacer"></div>
+        <button class="export-btn" id="exportPngBtn">🖼️ PNG로 저장</button>
+        <button class="export-btn" id="exportPdfBtn">📄 PDF로 저장</button>
+      </div>
+
+      <div id="captureArea">
+        <div class="capture-meta" id="captureMeta"></div>
+
+        <div class="stats" style="margin-bottom:24px;">
+          <div class="stat">
+            <div class="label">기간 내 총 채팅</div>
+            <div class="value" id="statTotal">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">참여자 수</div>
+            <div class="value" id="statPeople">0</div>
+          </div>
+          <div class="stat">
+            <div class="label">1위</div>
+            <div class="value" id="statTop">-</div>
+          </div>
+        </div>
+
+        <div class="board" id="board"></div>
+        <div class="footnote">※ 여러 줄로 이어진 메시지는 1건으로 계산되며, 입장/초대/퇴장 등 시스템 메시지는 제외됩니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab panel: word search (new feature) -->
+  <div class="tab-panel" id="tabPanelWord" style="display:none;">
+    <div class="card" id="wordCard">
+      <h2>단어별 사용 횟수</h2>
+
+      <div class="word-search-sticky" id="wordSearchSticky">
+        <label for="wordSearchInput">찾을 단어</label>
+        <div class="search-row">
+          <input type="text" id="wordSearchInput" placeholder="예: ㅋㅋ, 사랑해, 회의" autocomplete="off">
+          <button class="mini-btn primary" id="wordSearchBtn">검색 &amp; 이동</button>
+        </div>
+        <div class="word-search-note" id="wordSearchNote">아직 집계된 데이터가 없어요. 위에서 대화 파일을 올리고 '채팅 집계하기'를 눌러주세요.</div>
+      </div>
+
+      <div class="stats" id="wordStats" style="margin:20px 0;display:none;">
+        <div class="stat">
+          <div class="label">기간 내 총 단어 수</div>
+          <div class="value" id="wordStatTotal">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">고유 단어 수</div>
+          <div class="value" id="wordStatUnique">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">가장 많이 쓴 단어</div>
+          <div class="value" id="wordStatTop">-</div>
+        </div>
+      </div>
+
+      <div class="board" id="wordBoard"></div>
+      <div class="footnote" id="wordFootnote"></div>
+    </div>
   </div>
 
   <div class="privacy"><span class="icon">🔒</span>모든 분석은 이 브라우저 안에서만 이루어지고, 파일은 서버로 전송되지 않아요.</div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 (function(){
   // ---------- Parsing (mirrors kakao_chat_counter.py logic) ----------
@@ -459,9 +694,93 @@
   const excludeCard = document.getElementById('excludeCard');
   const excludeCount = document.getElementById('excludeCount');
   const memberList = document.getElementById('memberList');
+  const rankFromInput = document.getElementById('rankFrom');
+  const rankToInput = document.getElementById('rankTo');
+  const applyRankBtn = document.getElementById('applyRankBtn');
+  const showAllBtn = document.getElementById('showAllBtn');
+  const exportPngBtn = document.getElementById('exportPngBtn');
+  const exportPdfBtn = document.getElementById('exportPdfBtn');
+  const captureArea = document.getElementById('captureArea');
+  const captureMeta = document.getElementById('captureMeta');
+  const tabBtnPerson = document.getElementById('tabBtnPerson');
+  const tabBtnWord = document.getElementById('tabBtnWord');
+  const tabPanelPerson = document.getElementById('tabPanelPerson');
+  const tabPanelWord = document.getElementById('tabPanelWord');
+  const wordSearchInput = document.getElementById('wordSearchInput');
+  const wordSearchBtn = document.getElementById('wordSearchBtn');
+  const wordSearchNote = document.getElementById('wordSearchNote');
+  const wordStats = document.getElementById('wordStats');
+  const wordStatTotal = document.getElementById('wordStatTotal');
+  const wordStatUnique = document.getElementById('wordStatUnique');
+  const wordStatTop = document.getElementById('wordStatTop');
+  const wordBoard = document.getElementById('wordBoard');
+  const wordFootnote = document.getElementById('wordFootnote');
 
   let allMessages = [];
   let excludedMembers = new Set();
+  let currentRanked = [];      // full ranked list for the currently-run date range
+  let currentRanks = [];       // parallel array: competition rank (with ties) for each currentRanked entry
+  let currentTotal = 0;        // total messages in that date range (all shown ranks)
+  let currentFileBase = 'kakao_chat';
+  let currentRangeLabel = '';
+  let currentWordRanked = [];  // [[word, count], ...] for the currently-run date range
+  let currentWordRanks = [];   // parallel array: competition rank (with ties) for each currentWordRanked entry
+  let currentWordTotal = 0;    // total word tokens in range
+  let activeHighlightRow = null; // row currently held blue, waiting for the next search
+
+  function fadeOutHighlight(row){
+    row.classList.remove('word-highlight-active');
+    row.classList.remove('word-highlight-fadeout');
+    void row.offsetWidth; // restart animation
+    row.classList.add('word-highlight-fadeout');
+    const onEnd = () => {
+      row.classList.remove('word-highlight-fadeout');
+      row.removeEventListener('animationend', onEnd);
+    };
+    row.addEventListener('animationend', onEnd);
+  }
+
+  function setActiveHighlight(row){
+    // Whatever was highlighted from the previous search now fades blue -> green -> yellow.
+    if(activeHighlightRow && activeHighlightRow !== row){
+      fadeOutHighlight(activeHighlightRow);
+    }
+    if(activeHighlightRow !== row){
+      row.classList.remove('word-highlight-fadeout');
+      row.classList.remove('word-highlight-active');
+      void row.offsetWidth; // restart the entrance pulse
+      row.classList.add('word-highlight-active');
+    }
+    activeHighlightRow = row;
+  }
+
+  const WORD_DISPLAY_CAP = 1000; // avoid rendering unbounded DOM rows
+
+  function tokenizeWords(text){
+    return text
+      .split(/\s+/)
+      .map(w => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ''))
+      .filter(Boolean);
+  }
+
+  // Standard competition ranking ("1224" style): equal counts share the same
+  // rank, and the rank after a tie skips ahead by the number of tied items.
+  // e.g. counts [10,8,8,8,5] -> ranks [1,2,2,2,5]
+  function computeCompetitionRanks(sortedEntries){
+    const ranks = new Array(sortedEntries.length);
+    let prevCount = null;
+    let prevRank = 0;
+    sortedEntries.forEach(([, count], i) => {
+      if(count === prevCount){
+        ranks[i] = prevRank;
+      } else {
+        ranks[i] = i + 1;
+        prevRank = i + 1;
+        prevCount = count;
+      }
+    });
+    return ranks;
+  }
 
   function pad(n){ return String(n).padStart(2,'0'); }
   function toLocalInputValue(dt){
@@ -474,11 +793,19 @@
     reader.onload = (e) => {
       const text = e.target.result;
       allMessages = parseChatText(text);
+      currentFileBase = file.name.replace(/\.[^.]+$/, '') || 'kakao_chat';
 
       fileName.textContent = `${file.name} · 메시지 ${allMessages.length.toLocaleString()}건 파싱됨`;
       fileChip.classList.add('show');
 
       excludedMembers = new Set();
+      currentRanked = [];
+      currentRanks = [];
+      currentWordRanked = [];
+      currentWordRanks = [];
+      currentWordTotal = 0;
+      wordSearchInput.value = '';
+      renderWordBoard();
 
       if(allMessages.length){
         const first = allMessages[0].dt;
@@ -554,6 +881,11 @@
     e.stopPropagation();
     allMessages = [];
     excludedMembers = new Set();
+    currentRanked = [];
+    currentRanks = [];
+    currentWordRanked = [];
+    currentWordRanks = [];
+    currentWordTotal = 0;
     fileInput.value = '';
     fileChip.classList.remove('show');
     sinceInput.value = ''; untilInput.value = '';
@@ -563,6 +895,8 @@
     excludeCard.style.display = 'none';
     memberList.innerHTML = '';
     results.style.display = 'none';
+    wordSearchInput.value = '';
+    renderWordBoard();
   });
 
   runBtn.addEventListener('click', () => {
@@ -579,35 +913,270 @@
     for(const m of filtered){
       counts.set(m.sender, (counts.get(m.sender) || 0) + 1);
     }
-    const ranked = [...counts.entries()].sort((a,b) => b[1] - a[1]);
+    currentRanked = [...counts.entries()].sort((a,b) => b[1] - a[1]);
+    currentRanks = computeCompetitionRanks(currentRanked);
+    currentTotal = filtered.length;
+    currentRangeLabel = `${since ? since.toLocaleString('ko-KR') : '처음'} ~ ${until ? until.toLocaleString('ko-KR') : '끝'}`;
 
-    statTotal.textContent = filtered.length.toLocaleString();
-    statPeople.textContent = ranked.length.toLocaleString();
-    statTop.textContent = ranked.length ? ranked[0][0] : '-';
-
-    board.innerHTML = '';
-    if(!ranked.length){
-      board.innerHTML = '<div class="empty">지정한 기간에 채팅이 없어요.</div>';
-    } else {
-      const max = ranked[0][1];
-      ranked.forEach(([name, count], i) => {
-        const pct = Math.max(6, Math.round((count / max) * 100));
-        const row = document.createElement('div');
-        row.className = 'rank-row';
-        row.innerHTML = `
-          <div class="rank-num">${i + 1}</div>
-          <div class="bubble-track">
-            <div class="bubble-fill" style="width:${pct}%"></div>
-            <div class="bubble-label">${escapeHtml(name)}</div>
-          </div>
-          <div class="rank-count">${count.toLocaleString()}<span class="unit">건</span></div>
-        `;
-        board.appendChild(row);
-      });
+    // word counts share the same date/exclude-filtered message set
+    const wordCounts = new Map();
+    for(const m of filtered){
+      for(const token of tokenizeWords(m.text)){
+        const norm = token.toLowerCase();
+        wordCounts.set(norm, (wordCounts.get(norm) || 0) + 1);
+      }
     }
+    currentWordRanked = [...wordCounts.entries()].sort((a,b) => b[1] - a[1]);
+    currentWordRanks = computeCompetitionRanks(currentWordRanked);
+    currentWordTotal = currentWordRanked.reduce((sum, [, c]) => sum + c, 0);
+    renderWordBoard();
+
+    const maxRank = currentRanks.length ? currentRanks[currentRanks.length - 1] : 1;
+    rankFromInput.value = 1;
+    rankToInput.value = maxRank;
+    rankFromInput.max = maxRank;
+    rankToInput.max = maxRank;
+
+    renderBoard(1, maxRank);
     results.style.display = 'block';
     results.scrollIntoView({behavior:'smooth', block:'start'});
   });
+
+  function renderBoard(rankFrom, rankTo){
+    statTotal.textContent = currentTotal.toLocaleString();
+    statPeople.textContent = currentRanked.length.toLocaleString();
+    statTop.textContent = currentRanked.length ? currentRanked[0][0] : '-';
+
+    board.innerHTML = '';
+    if(!currentRanked.length){
+      board.innerHTML = '<div class="empty">지정한 기간에 채팅이 없어요.</div>';
+      captureMeta.innerHTML = `집계 기간: <strong>${escapeHtml(currentRangeLabel)}</strong>`;
+      return;
+    }
+
+    const maxRank = currentRanks[currentRanks.length - 1];
+    const from = Math.max(1, Math.min(rankFrom, maxRank));
+    const to = Math.max(from, Math.min(rankTo, maxRank));
+    const max = currentRanked[0][1];
+
+    const frag = document.createDocumentFragment();
+    let shownCount = 0;
+    currentRanked.forEach(([name, count], i) => {
+      const rank = currentRanks[i];
+      if(rank < from || rank > to) return;
+      shownCount++;
+      const pct = Math.max(6, Math.round((count / max) * 100));
+      const row = document.createElement('div');
+      row.className = 'rank-row';
+      row.innerHTML = `
+        <div class="rank-num">${rank}</div>
+        <div class="bubble-track">
+          <div class="bubble-fill" style="width:${pct}%"></div>
+          <div class="bubble-label">${escapeHtml(name)}</div>
+        </div>
+        <div class="rank-count">${count.toLocaleString()}<span class="unit">건</span></div>
+      `;
+      frag.appendChild(row);
+    });
+
+    if(shownCount === 0){
+      board.innerHTML = '<div class="empty">해당 순위 범위에 표시할 항목이 없어요.</div>';
+    } else {
+      board.appendChild(frag);
+    }
+
+    const rangeText = (from === 1 && to === maxRank)
+      ? `전체 (${currentRanked.length}명)`
+      : `${from}위 ~ ${to}위 (전체 ${currentRanked.length}명 중)`;
+    captureMeta.innerHTML =
+      `집계 기간: <strong>${escapeHtml(currentRangeLabel)}</strong> &nbsp;·&nbsp; ` +
+      `표시 순위: <strong>${escapeHtml(rangeText)}</strong>`;
+  }
+
+  applyRankBtn.addEventListener('click', () => {
+    if(!currentRanked.length) return;
+    const maxRank = currentRanks[currentRanks.length - 1];
+    const from = parseInt(rankFromInput.value, 10) || 1;
+    const to = parseInt(rankToInput.value, 10) || maxRank;
+    renderBoard(from, to);
+  });
+
+  showAllBtn.addEventListener('click', () => {
+    if(!currentRanked.length) return;
+    const maxRank = currentRanks[currentRanks.length - 1];
+    rankFromInput.value = 1;
+    rankToInput.value = maxRank;
+    renderBoard(1, maxRank);
+  });
+
+  // ---------- Tabs ----------
+  function switchTab(tab){
+    const isPerson = tab === 'person';
+    tabBtnPerson.classList.toggle('active', isPerson);
+    tabBtnWord.classList.toggle('active', !isPerson);
+    tabPanelPerson.style.display = isPerson ? 'block' : 'none';
+    tabPanelWord.style.display = isPerson ? 'none' : 'block';
+    if(!isPerson) wordSearchInput.focus();
+  }
+  tabBtnPerson.addEventListener('click', () => switchTab('person'));
+  tabBtnWord.addEventListener('click', () => switchTab('word'));
+
+  // ---------- Word count tab ----------
+  function renderWordBoard(){
+    wordBoard.innerHTML = '';
+    activeHighlightRow = null;
+
+    if(!currentWordRanked.length){
+      wordSearchNote.textContent = '아직 집계된 데이터가 없어요. 위에서 대화 파일을 올리고 \'채팅 집계하기\'를 눌러주세요.';
+      wordSearchNote.className = 'word-search-note';
+      wordStats.style.display = 'none';
+      wordFootnote.textContent = '';
+      return;
+    }
+
+    wordSearchNote.textContent = `총 ${currentWordRanked.length.toLocaleString()}개의 고유 단어 중에서 검색할 수 있어요.`;
+    wordSearchNote.className = 'word-search-note';
+    wordStats.style.display = 'grid';
+    wordStatTotal.textContent = currentWordTotal.toLocaleString();
+    wordStatUnique.textContent = currentWordRanked.length.toLocaleString();
+    wordStatTop.textContent = currentWordRanked[0][0];
+
+    const shown = currentWordRanked.slice(0, WORD_DISPLAY_CAP);
+    const max = currentWordRanked[0][1];
+    const frag = document.createDocumentFragment();
+    shown.forEach(([word, count], i) => {
+      const pct = Math.max(6, Math.round((count / max) * 100));
+      const row = document.createElement('div');
+      row.className = 'rank-row';
+      row.id = `word-row-${i}`;
+      row.dataset.word = word;
+      row.innerHTML = `
+        <div class="rank-num">${currentWordRanks[i]}</div>
+        <div class="bubble-track">
+          <div class="bubble-fill" style="width:${pct}%"></div>
+          <div class="bubble-label">${escapeHtml(word)}</div>
+        </div>
+        <div class="rank-count">${count.toLocaleString()}<span class="unit">회</span></div>
+      `;
+      frag.appendChild(row);
+    });
+    wordBoard.appendChild(frag);
+
+    wordFootnote.textContent = currentWordRanked.length > WORD_DISPLAY_CAP
+      ? `※ 공백 기준으로 단어를 나누고 앞뒤 특수문자를 정리해 집계했어요. 표시는 상위 ${WORD_DISPLAY_CAP.toLocaleString()}개 단어까지이며, 검색은 전체 단어 중에서 가능해요.`
+      : `※ 공백 기준으로 단어를 나누고 앞뒤 특수문자를 정리해 집계했어요.`;
+  }
+
+  function searchWord(){
+    const raw = wordSearchInput.value.trim();
+    if(!raw){
+      wordSearchNote.textContent = '검색할 단어를 입력해주세요.';
+      wordSearchNote.className = 'word-search-note';
+      return;
+    }
+    if(!currentWordRanked.length){
+      wordSearchNote.textContent = '아직 집계된 데이터가 없어요. 위에서 대화 파일을 올리고 \'채팅 집계하기\'를 눌러주세요.';
+      wordSearchNote.className = 'word-search-note';
+      return;
+    }
+    const target = raw.toLowerCase();
+    const idx = currentWordRanked.findIndex(([word]) => word === target);
+
+    if(idx === -1){
+      wordSearchNote.textContent = `'${raw}' 은(는) 이 기간 대화에서 찾을 수 없어요.`;
+      wordSearchNote.className = 'word-search-note notfound';
+      return;
+    }
+
+    wordSearchNote.textContent = `'${raw}' 은(는) ${currentWordRanks[idx].toLocaleString()}위 · 총 ${currentWordRanked[idx][1].toLocaleString()}회 사용됨`;
+    wordSearchNote.className = 'word-search-note found';
+
+    // Ensure the row exists in the DOM even if it's beyond the display cap
+    if(idx >= WORD_DISPLAY_CAP){
+      renderExtendedWordBoard(idx);
+    }
+
+    const row = document.getElementById(`word-row-${idx}`);
+    if(row){
+      const stickyH = document.getElementById('wordSearchSticky').offsetHeight;
+      const top = row.getBoundingClientRect().top + window.scrollY - stickyH - 16;
+      window.scrollTo({ top, behavior: 'smooth' });
+      setActiveHighlight(row);
+    }
+  }
+
+  function renderExtendedWordBoard(uptoIdx){
+    // Re-render including rows up to uptoIdx so the searched word is scrollable-to.
+    wordBoard.innerHTML = '';
+    activeHighlightRow = null;
+    const shown = currentWordRanked.slice(0, uptoIdx + 1);
+    const max = currentWordRanked[0][1];
+    const frag = document.createDocumentFragment();
+    shown.forEach(([word, count], i) => {
+      const pct = Math.max(6, Math.round((count / max) * 100));
+      const row = document.createElement('div');
+      row.className = 'rank-row';
+      row.id = `word-row-${i}`;
+      row.dataset.word = word;
+      row.innerHTML = `
+        <div class="rank-num">${currentWordRanks[i]}</div>
+        <div class="bubble-track">
+          <div class="bubble-fill" style="width:${pct}%"></div>
+          <div class="bubble-label">${escapeHtml(word)}</div>
+        </div>
+        <div class="rank-count">${count.toLocaleString()}<span class="unit">회</span></div>
+      `;
+      frag.appendChild(row);
+    });
+    wordBoard.appendChild(frag);
+    wordFootnote.textContent = `※ 검색한 단어의 순위를 보여주기 위해 상위 ${(uptoIdx + 1).toLocaleString()}개 단어까지 표시했어요.`;
+  }
+
+  wordSearchBtn.addEventListener('click', searchWord);
+  wordSearchInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') searchWord();
+  });
+
+  async function exportCapture(kind){
+    if(!currentRanked.length || typeof html2canvas === 'undefined'){
+      alert('내보낼 결과가 없거나, 내보내기 라이브러리를 불러오지 못했어요. 인터넷 연결을 확인해주세요.');
+      return;
+    }
+    const btn = kind === 'png' ? exportPngBtn : exportPdfBtn;
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '내보내는 중…';
+    try{
+      const canvas = await html2canvas(captureArea, { scale: 2, backgroundColor: '#FFFFFF' });
+      const filenameBase = `${currentFileBase}_ranking`;
+      if(kind === 'png'){
+        const link = document.createElement('a');
+        link.download = `${filenameBase}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } else {
+        const { jsPDF } = window.jspdf;
+        const pdfWidth = 210; // A4 width, mm
+        const pdfHeight = canvas.height * pdfWidth / canvas.width;
+        const pdf = new jsPDF({
+          orientation: pdfHeight > pdfWidth ? 'p' : 'l',
+          unit: 'mm',
+          format: [pdfWidth, pdfHeight]
+        });
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`${filenameBase}.pdf`);
+      }
+    } catch(err){
+      console.error(err);
+      alert('내보내는 중 오류가 발생했어요: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  }
+
+  exportPngBtn.addEventListener('click', () => exportCapture('png'));
+  exportPdfBtn.addEventListener('click', () => exportCapture('pdf'));
 
   function escapeHtml(s){
     return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
