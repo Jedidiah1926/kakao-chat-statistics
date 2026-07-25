@@ -163,6 +163,46 @@
   .run-btn:active{transform:scale(0.99);}
   .run-btn:disabled{background:#EDE6CE;color:var(--ink-soft);cursor:not-allowed;}
 
+  /* ---- Exclude member chips ---- */
+  .chip-list{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .member-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:8px 12px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:#FFFDF2;
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+    user-select:none;
+    transition:background .12s, border-color .12s, color .12s, text-decoration .12s;
+  }
+  .member-chip input{
+    display:none;
+  }
+  .member-chip .count{
+    font-family:var(--mono);
+    font-weight:400;
+    font-size:11.5px;
+    color:var(--ink-soft);
+  }
+  .member-chip.excluded{
+    background:#F4EFDD;
+    border-color:var(--line);
+    color:var(--ink-soft);
+    text-decoration:line-through;
+  }
+  .member-chip:hover{
+    border-color:var(--kakao-yellow-dim);
+  }
+
   /* ---- Stat strip ---- */
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
   @media (max-width:560px){.stats{grid-template-columns:1fr;}}
@@ -286,9 +326,16 @@
     <button class="run-btn" id="runBtn" disabled>이 기간 채팅 집계하기</button>
   </div>
 
-  <!-- Step 3: Results -->
+  <!-- Step 3: Exclude members -->
+  <div class="card" id="excludeCard" style="display:none;">
+    <h2><span class="num">3</span>순위에서 제외할 멤버 <span id="excludeCount" style="font-weight:400;color:var(--ink-soft);text-transform:none;letter-spacing:normal;"></span></h2>
+    <div class="chip-list" id="memberList"></div>
+    <div class="range-note">체크한 멤버는 총 채팅 수와 순위 계산에서 완전히 제외돼요. (예: 나 자신, 봇, 탈퇴한 멤버 등)</div>
+  </div>
+
+  <!-- Step 4: Results -->
   <div class="card" id="results">
-    <h2><span class="num">3</span>집계 결과</h2>
+    <h2><span class="num">4</span>집계 결과</h2>
 
     <div class="stats" style="margin-bottom:24px;">
       <div class="stat">
@@ -409,8 +456,12 @@
   const statTotal = document.getElementById('statTotal');
   const statPeople = document.getElementById('statPeople');
   const statTop = document.getElementById('statTop');
+  const excludeCard = document.getElementById('excludeCard');
+  const excludeCount = document.getElementById('excludeCount');
+  const memberList = document.getElementById('memberList');
 
   let allMessages = [];
+  let excludedMembers = new Set();
 
   function pad(n){ return String(n).padStart(2,'0'); }
   function toLocalInputValue(dt){
@@ -427,6 +478,8 @@
       fileName.textContent = `${file.name} · 메시지 ${allMessages.length.toLocaleString()}건 파싱됨`;
       fileChip.classList.add('show');
 
+      excludedMembers = new Set();
+
       if(allMessages.length){
         const first = allMessages[0].dt;
         const last = allMessages[allMessages.length - 1].dt;
@@ -436,13 +489,54 @@
         untilInput.disabled = false;
         runBtn.disabled = false;
         rangeNote.textContent = `대화 전체 기간: ${first.toLocaleString('ko-KR')} ~ ${last.toLocaleString('ko-KR')} (필요시 직접 조정하세요)`;
+        renderMemberList();
       } else {
         rangeNote.textContent = '메시지를 하나도 인식하지 못했어요. 파일 형식을 확인해주세요.';
         runBtn.disabled = true;
+        excludeCard.style.display = 'none';
       }
       results.style.display = 'none';
     };
     reader.readAsText(file, 'utf-8');
+  }
+
+  function renderMemberList(){
+    const counts = new Map();
+    for(const m of allMessages){
+      counts.set(m.sender, (counts.get(m.sender) || 0) + 1);
+    }
+    const members = [...counts.entries()].sort((a,b) => b[1] - a[1]);
+
+    memberList.innerHTML = '';
+    members.forEach(([name, count]) => {
+      const chip = document.createElement('label');
+      chip.className = 'member-chip';
+      chip.innerHTML = `
+        <input type="checkbox" data-name="${escapeHtml(name)}">
+        <span class="name">${escapeHtml(name)}</span>
+        <span class="count">${count.toLocaleString()}건</span>
+      `;
+      const checkbox = chip.querySelector('input');
+      checkbox.addEventListener('change', () => {
+        if(checkbox.checked){
+          excludedMembers.add(name);
+          chip.classList.add('excluded');
+        } else {
+          excludedMembers.delete(name);
+          chip.classList.remove('excluded');
+        }
+        updateExcludeCount();
+      });
+      memberList.appendChild(chip);
+    });
+    updateExcludeCount();
+    excludeCard.style.display = 'block';
+  }
+
+  function updateExcludeCount(){
+    excludeCount.textContent = excludedMembers.size
+      ? `· ${excludedMembers.size}명 제외됨`
+      : '';
   }
 
   dropzone.addEventListener('click', () => fileInput.click());
@@ -459,12 +553,15 @@
   clearFile.addEventListener('click', (e) => {
     e.stopPropagation();
     allMessages = [];
+    excludedMembers = new Set();
     fileInput.value = '';
     fileChip.classList.remove('show');
     sinceInput.value = ''; untilInput.value = '';
     sinceInput.disabled = true; untilInput.disabled = true;
     runBtn.disabled = true;
     rangeNote.textContent = '파일을 먼저 업로드하면 대화 전체 기간이 자동으로 채워져요.';
+    excludeCard.style.display = 'none';
+    memberList.innerHTML = '';
     results.style.display = 'none';
   });
 
@@ -474,7 +571,8 @@
     const until = untilInput.value ? new Date(untilInput.value) : null;
 
     const filtered = allMessages.filter(m =>
-      (!since || m.dt >= since) && (!until || m.dt <= until)
+      (!since || m.dt >= since) && (!until || m.dt <= until) &&
+      !excludedMembers.has(m.sender)
     );
 
     const counts = new Map();
