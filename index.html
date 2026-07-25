@@ -273,6 +273,136 @@
   }
   .capture-meta strong{color:var(--ink);}
 
+  /* ---- Exclude card: collapse + search ---- */
+  .exclude-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .collapse-btn{
+    flex-shrink:0;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:7px 12px;
+    font-size:12px;
+    font-weight:700;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .collapse-btn:hover{border-color:var(--kakao-yellow-dim);color:var(--ink);}
+  .exclude-body.collapsed{display:none;}
+  .member-search{
+    width:100%;
+    padding:10px 12px;
+    margin-bottom:12px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    font-size:13.5px;
+    background:#fff;
+    color:var(--ink);
+  }
+  .member-search:focus{
+    outline:2px solid var(--kakao-yellow-dim);
+    outline-offset:1px;
+  }
+
+  /* ---- View toggle (table / chart) ---- */
+  .view-toggle{
+    display:flex;
+    background:#F4EFDD;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:4px;
+    gap:4px;
+  }
+  .view-toggle-btn{
+    padding:9px 13px;
+    border:none;
+    border-radius:7px;
+    background:transparent;
+    color:var(--ink-soft);
+    font-weight:700;
+    font-size:12.5px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .view-toggle-btn:hover{color:var(--ink);}
+  .view-toggle-btn.active{
+    background:#fff;
+    color:var(--ink);
+    box-shadow:0 1px 3px rgba(36,27,20,0.12);
+  }
+  .rank-range-group{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:end;
+    gap:10px;
+  }
+
+  /* ---- Hourly chart ---- */
+  .chart-title{
+    font-weight:800;
+    font-size:14.5px;
+    margin-bottom:2px;
+  }
+  .chart-subtitle{
+    font-weight:400;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .hour-chart{
+    display:flex;
+    align-items:flex-end;
+    gap:5px;
+    height:200px;
+    margin:20px 0 4px;
+    padding:22px 2px 0;
+  }
+  .hour-bar-wrap{
+    flex:1 1 0;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-end;
+    height:100%;
+    position:relative;
+  }
+  .hour-bar-count{
+    font-family:var(--mono);
+    font-size:10px;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:4px;
+    opacity:0;
+    transition:opacity .15s;
+    white-space:nowrap;
+  }
+  .hour-bar-wrap:hover .hour-bar-count{opacity:1;}
+  .hour-bar{
+    width:100%;
+    max-width:22px;
+    background:linear-gradient(180deg, var(--kakao-yellow), var(--kakao-yellow-dim));
+    border-radius:5px 5px 0 0;
+    transition:height .5s cubic-bezier(.2,.8,.2,1), background .15s;
+  }
+  .hour-bar-wrap:hover .hour-bar{
+    background:linear-gradient(180deg, #93E4FF, #38BDF8);
+  }
+  .hour-bar-label{
+    font-family:var(--mono);
+    font-size:9.5px;
+    color:var(--ink-soft);
+    margin-top:6px;
+  }
+  @media (max-width:700px){
+    .hour-bar-label{font-size:8px;}
+    .hour-chart{gap:2px;}
+  }
+
   /* ---- Stat strip ---- */
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
   @media (max-width:560px){.stats{grid-template-columns:1fr;}}
@@ -506,9 +636,16 @@
 
     <!-- Step 3: Exclude members -->
     <div class="card" id="excludeCard" style="display:none;">
-      <h2><span class="num">3</span>순위에서 제외할 멤버 <span id="excludeCount" style="font-weight:400;color:var(--ink-soft);text-transform:none;letter-spacing:normal;"></span></h2>
-      <div class="chip-list" id="memberList"></div>
-      <div class="range-note">체크한 멤버는 총 채팅 수와 순위 계산에서 완전히 제외돼요. (예: 나 자신, 봇, 탈퇴한 멤버 등)</div>
+      <div class="exclude-header">
+        <h2 style="margin:0;"><span class="num">3</span>순위에서 제외할 멤버 <span id="excludeCount" style="font-weight:400;color:var(--ink-soft);text-transform:none;letter-spacing:normal;"></span></h2>
+        <button class="collapse-btn" id="excludeCollapseBtn" type="button" aria-expanded="true">숨기기 ▲</button>
+      </div>
+      <div class="exclude-body" id="excludeBody">
+        <input type="text" id="memberSearchInput" class="member-search" placeholder="멤버 이름 검색…" autocomplete="off">
+        <div class="chip-list" id="memberList"></div>
+        <div class="empty" id="memberSearchEmpty" style="display:none;padding:6px 0;">검색 결과가 없어요.</div>
+        <div class="range-note">체크한 멤버는 총 채팅 수와 순위 계산에서 완전히 제외돼요. (예: 나 자신, 봇, 탈퇴한 멤버 등)</div>
+      </div>
     </div>
 
     <!-- Step 4: Results -->
@@ -516,16 +653,22 @@
       <h2><span class="num">4</span>집계 결과</h2>
 
       <div class="controls-row">
-        <div class="range-field">
-          <label for="rankFrom">표시 순위 (시작)</label>
-          <input type="number" id="rankFrom" min="1" value="1">
+        <div class="view-toggle" id="viewToggle">
+          <button class="view-toggle-btn active" id="viewTableBtn" type="button">📋 순위표 보기</button>
+          <button class="view-toggle-btn" id="viewChartBtn" type="button">📈 그래프 보기</button>
         </div>
-        <div class="range-field">
-          <label for="rankTo">표시 순위 (끝)</label>
-          <input type="number" id="rankTo" min="1" value="1">
+        <div class="rank-range-group" id="rankRangeGroup">
+          <div class="range-field">
+            <label for="rankFrom">표시 순위 (시작)</label>
+            <input type="number" id="rankFrom" min="1" value="1">
+          </div>
+          <div class="range-field">
+            <label for="rankTo">표시 순위 (끝)</label>
+            <input type="number" id="rankTo" min="1" value="1">
+          </div>
+          <button class="mini-btn" id="applyRankBtn">범위 적용</button>
+          <button class="mini-btn" id="showAllBtn">전체 보기</button>
         </div>
-        <button class="mini-btn" id="applyRankBtn">범위 적용</button>
-        <button class="mini-btn" id="showAllBtn">전체 보기</button>
         <div class="spacer"></div>
         <button class="export-btn" id="exportPngBtn">🖼️ PNG로 저장</button>
         <button class="export-btn" id="exportPdfBtn">📄 PDF로 저장</button>
@@ -550,6 +693,13 @@
         </div>
 
         <div class="board" id="board"></div>
+
+        <div class="chart-wrap" id="chartWrap" style="display:none;">
+          <div class="chart-title">시간대별 채팅량 <span class="chart-subtitle">(0시 ~ 23시 정각 기준, 전체 기간 합산)</span></div>
+          <div class="hour-chart" id="hourChart"></div>
+          <div class="empty" id="chartEmpty" style="display:none;">먼저 '채팅 집계하기'를 눌러주세요.</div>
+        </div>
+
         <div class="footnote">※ 여러 줄로 이어진 메시지는 1건으로 계산되며, 입장/초대/퇴장 등 시스템 메시지는 제외됩니다.</div>
       </div>
     </div>
@@ -693,11 +843,21 @@
   const statTop = document.getElementById('statTop');
   const excludeCard = document.getElementById('excludeCard');
   const excludeCount = document.getElementById('excludeCount');
+  const excludeCollapseBtn = document.getElementById('excludeCollapseBtn');
+  const excludeBody = document.getElementById('excludeBody');
+  const memberSearchInput = document.getElementById('memberSearchInput');
+  const memberSearchEmpty = document.getElementById('memberSearchEmpty');
   const memberList = document.getElementById('memberList');
   const rankFromInput = document.getElementById('rankFrom');
   const rankToInput = document.getElementById('rankTo');
   const applyRankBtn = document.getElementById('applyRankBtn');
   const showAllBtn = document.getElementById('showAllBtn');
+  const rankRangeGroup = document.getElementById('rankRangeGroup');
+  const viewTableBtn = document.getElementById('viewTableBtn');
+  const viewChartBtn = document.getElementById('viewChartBtn');
+  const chartWrap = document.getElementById('chartWrap');
+  const hourChart = document.getElementById('hourChart');
+  const chartEmpty = document.getElementById('chartEmpty');
   const exportPngBtn = document.getElementById('exportPngBtn');
   const exportPdfBtn = document.getElementById('exportPdfBtn');
   const captureArea = document.getElementById('captureArea');
@@ -721,12 +881,15 @@
   let currentRanked = [];      // full ranked list for the currently-run date range
   let currentRanks = [];       // parallel array: competition rank (with ties) for each currentRanked entry
   let currentTotal = 0;        // total messages in that date range (all shown ranks)
+  let currentFilteredMessages = []; // raw filtered messages for the currently-run date range (for the hourly chart)
+  let currentView = 'table';   // 'table' | 'chart'
   let currentFileBase = 'kakao_chat';
   let currentRangeLabel = '';
   let currentWordRanked = [];  // [[word, count], ...] for the currently-run date range
   let currentWordRanks = [];   // parallel array: competition rank (with ties) for each currentWordRanked entry
   let currentWordTotal = 0;    // total word tokens in range
   let activeHighlightRow = null; // row currently held blue, waiting for the next search
+
 
   function fadeOutHighlight(row){
     row.classList.remove('word-highlight-active');
@@ -801,11 +964,14 @@
       excludedMembers = new Set();
       currentRanked = [];
       currentRanks = [];
+      currentFilteredMessages = [];
       currentWordRanked = [];
       currentWordRanks = [];
       currentWordTotal = 0;
       wordSearchInput.value = '';
       renderWordBoard();
+      setView('table');
+      renderHourChart();
 
       if(allMessages.length){
         const first = allMessages[0].dt;
@@ -838,6 +1004,7 @@
     members.forEach(([name, count]) => {
       const chip = document.createElement('label');
       chip.className = 'member-chip';
+      chip.dataset.name = name.toLowerCase();
       chip.innerHTML = `
         <input type="checkbox" data-name="${escapeHtml(name)}">
         <span class="name">${escapeHtml(name)}</span>
@@ -858,7 +1025,33 @@
     });
     updateExcludeCount();
     excludeCard.style.display = 'block';
+
+    // reset collapse + search state for the newly loaded file
+    excludeBody.classList.remove('collapsed');
+    excludeCollapseBtn.textContent = '숨기기 ▲';
+    excludeCollapseBtn.setAttribute('aria-expanded', 'true');
+    memberSearchInput.value = '';
+    filterMemberList();
   }
+
+  function filterMemberList(){
+    const q = memberSearchInput.value.trim().toLowerCase();
+    let visibleCount = 0;
+    memberList.querySelectorAll('.member-chip').forEach(chip => {
+      const match = !q || (chip.dataset.name || '').includes(q);
+      chip.style.display = match ? '' : 'none';
+      if(match) visibleCount++;
+    });
+    memberSearchEmpty.style.display = (q && visibleCount === 0) ? 'block' : 'none';
+  }
+
+  excludeCollapseBtn.addEventListener('click', () => {
+    const collapsed = excludeBody.classList.toggle('collapsed');
+    excludeCollapseBtn.textContent = collapsed ? '펼치기 ▼' : '숨기기 ▲';
+    excludeCollapseBtn.setAttribute('aria-expanded', String(!collapsed));
+  });
+
+  memberSearchInput.addEventListener('input', filterMemberList);
 
   function updateExcludeCount(){
     excludeCount.textContent = excludedMembers.size
@@ -883,6 +1076,7 @@
     excludedMembers = new Set();
     currentRanked = [];
     currentRanks = [];
+    currentFilteredMessages = [];
     currentWordRanked = [];
     currentWordRanks = [];
     currentWordTotal = 0;
@@ -894,9 +1088,12 @@
     rangeNote.textContent = '파일을 먼저 업로드하면 대화 전체 기간이 자동으로 채워져요.';
     excludeCard.style.display = 'none';
     memberList.innerHTML = '';
+    memberSearchInput.value = '';
     results.style.display = 'none';
     wordSearchInput.value = '';
     renderWordBoard();
+    setView('table');
+    renderHourChart();
   });
 
   runBtn.addEventListener('click', () => {
@@ -916,6 +1113,7 @@
     currentRanked = [...counts.entries()].sort((a,b) => b[1] - a[1]);
     currentRanks = computeCompetitionRanks(currentRanked);
     currentTotal = filtered.length;
+    currentFilteredMessages = filtered;
     currentRangeLabel = `${since ? since.toLocaleString('ko-KR') : '처음'} ~ ${until ? until.toLocaleString('ko-KR') : '끝'}`;
 
     // word counts share the same date/exclude-filtered message set
@@ -938,6 +1136,7 @@
     rankToInput.max = maxRank;
 
     renderBoard(1, maxRank);
+    renderHourChart();
     results.style.display = 'block';
     results.scrollIntoView({behavior:'smooth', block:'start'});
   });
@@ -1008,6 +1207,49 @@
     rankToInput.value = maxRank;
     renderBoard(1, maxRank);
   });
+
+  // ---------- Table / Chart view toggle ----------
+  function setView(view){
+    currentView = view;
+    const isTable = view === 'table';
+    viewTableBtn.classList.toggle('active', isTable);
+    viewChartBtn.classList.toggle('active', !isTable);
+    rankRangeGroup.style.display = isTable ? 'flex' : 'none';
+    board.style.display = isTable ? '' : 'none';
+    chartWrap.style.display = isTable ? 'none' : 'block';
+  }
+  viewTableBtn.addEventListener('click', () => setView('table'));
+  viewChartBtn.addEventListener('click', () => setView('chart'));
+
+  function renderHourChart(){
+    hourChart.innerHTML = '';
+    if(!currentFilteredMessages.length){
+      chartEmpty.style.display = 'block';
+      return;
+    }
+    chartEmpty.style.display = 'none';
+
+    const hourCounts = new Array(24).fill(0);
+    for(const m of currentFilteredMessages){
+      hourCounts[m.dt.getHours()]++;
+    }
+    const max = Math.max(...hourCounts, 1);
+
+    const frag = document.createDocumentFragment();
+    hourCounts.forEach((count, hour) => {
+      const pct = Math.max(2, Math.round((count / max) * 100));
+      const wrap = document.createElement('div');
+      wrap.className = 'hour-bar-wrap';
+      wrap.title = `${hour}시: ${count.toLocaleString()}건`;
+      wrap.innerHTML = `
+        <div class="hour-bar-count">${count.toLocaleString()}</div>
+        <div class="hour-bar" style="height:${pct}%"></div>
+        <div class="hour-bar-label">${hour}시</div>
+      `;
+      frag.appendChild(wrap);
+    });
+    hourChart.appendChild(frag);
+  }
 
   // ---------- Tabs ----------
   function switchTab(tab){
